@@ -53,6 +53,18 @@ struct ContentView: View {
                 
                 Spacer()
                 
+                NavigationLink {
+                    ReceiptFormView()
+                } label: {
+                    Text("View Receipts")
+                        .padding()
+                        .background(Color.black)
+                        .foregroundColor(Color.white)
+                        .cornerRadius(8)
+                }
+                
+                Spacer()
+                
             }
         }
     }
@@ -68,6 +80,13 @@ struct Book: Identifiable, Equatable {
     let imageName: String
     var added: Bool
     
+}
+
+struct Receipt: Identifiable, Equatable {
+    let id = UUID()
+    let bookName: String
+    let lendDate: Date
+    let returnDate: Date
 }
 
 // Book list class to which contains a modifiable array to store books
@@ -88,12 +107,32 @@ class BookList: ObservableObject {
     ]
 }
 
+class ReceiptList: ObservableObject {
+    
+    static var sharedReceipts = ReceiptList()
+    
+    @Published var receipts: [Receipt] = []
+}
+
 //Book List view, showcases all available books and allows users to
 // check them out while displaying availability
 struct BookListView: View {
     
     @ObservedObject var bookList = BookList.shared
-
+    @State var sorted: Bool = true
+    @State var sortedLabel: String = "A-Z"
+    @State var searchText = ""
+    
+    var filteredBookList : [Book] {
+        if searchText.isEmpty {
+            return bookList.books
+        }
+        else {
+            
+            return bookList.books.filter {$0.name.localizedCaseInsensitiveContains(searchText) }
+            
+        }
+    }
     
     var body: some View {
         
@@ -103,10 +142,48 @@ struct BookListView: View {
         ScrollView {
             //Create a lazy grid view to display two books side by side
             //in each row
+            HStack {
+                
+                TextField("Search For Books", text: $searchText)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .border(Color.black, width: 2)
+                    .padding()
+                
+                
+                Spacer()
+                
+                Button(action: {
+                    sorted.toggle()
+                    
+                    if sorted {
+                        bookList.books = bookList.books.sorted{$0.name < $1.name}
+                        sortedLabel = "A-Z"
+                        
+                    }
+                    else {
+                        bookList.books = bookList.books.sorted { $0.name > $1.name}
+                        sortedLabel = "Z-A"
+                    }
+                }) {
+                    Text(sortedLabel)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(sorted ? Color.green : Color.red)
+                        .cornerRadius(10)
+                    
+                    
+                }
+                .padding()
+                
+            }
+            
+            
+            
             LazyVGrid(columns: columns) {
                 //Loop through all books and display their info and buttons
-                ForEach(bookList.books.indices, id: \.self) { index in
-                    let book = bookList.books[index]
+                ForEach(filteredBookList.indices, id: \.self) { index in
+                    let book = filteredBookList[index]
                     VStack{
                         Image(book.imageName)
                             .resizable()
@@ -118,7 +195,9 @@ struct BookListView: View {
                         Text(book.author)
                         
                         Button(action: {
-                            bookList.books[index].borrowed.toggle()
+                            if let index = bookList.books.firstIndex(where: { $0.id == book.id }) {
+                                                bookList.books[index].borrowed.toggle()
+                                            }
                         }) {
                             Text(book.borrowed ? "Return" : "Borrow")
                                 .font(.headline)
@@ -131,11 +210,12 @@ struct BookListView: View {
                     }
                     .padding()
                     .cornerRadius(10)
-                    }
                 }
-                .padding()
+                
             }
-            
+            .padding()
+        }
+         
         
     }
 }
@@ -186,7 +266,19 @@ struct AdditionFormView: View {
         }
         
     }
+    
 }
+
+struct ReceiptFormView: View {
+    
+    var body: some View {
+        
+        
+        
+    }
+}
+
+
 
 #Preview {
     ContentView()
