@@ -6,6 +6,10 @@
 // Implements a simple library book lending app, where all books
 // manually added will have cusomtized images, and any books added
 // by the user will have a filler book image
+
+// Lab 3 Additions: Added in a search bar for books and a sorting
+// feature when viewing books, also added in a recipt page that
+// showcases all current lent book receipts 
 //
 
 import SwiftUI
